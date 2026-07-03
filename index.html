@@ -325,7 +325,12 @@
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
     });
-
+    teacherPasswordInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    teacherLoginBtn.click();
+    }
+  });
     teacherLoginBtn.addEventListener("click", async () => {
       startMessage.textContent = "";
 
