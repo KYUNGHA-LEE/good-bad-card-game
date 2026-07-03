@@ -2,10 +2,541 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>좋은말 나쁜말 카드 게임</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    header {
+      background: #4f7cff;
+      color: white;
+      padding: 22px;
+      text-align: center;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #4f7cff;
+      color: white;
+    }
+
+    button.secondary {
+      background: #eef2ff;
+      color: #3155c7;
+    }
+
+    button.danger {
+      background: #ff5a5a;
+    }
+
+    input {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .word-card {
+      min-height: 100px;
+      border-radius: 18px;
+      background: white;
+      border: 3px solid #dbe3ff;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+      padding: 12px;
+    }
+
+    .word-card:hover {
+      transform: scale(1.04);
+      background: #f0f4ff;
+    }
+
+    .scoreboard {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    .scoreboard th,
+    .scoreboard td {
+      border-bottom: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #3155c7;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .big-score {
+      font-size: 36px;
+      font-weight: bold;
+      color: #4f7cff;
+    }
+
+    .message {
+      margin-top: 12px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>좋은말 나쁜말 카드 게임</h1>
-  <p>준비 중입니다.</p>
+  <header>
+    <h1>좋은말 나쁜말 카드 게임</h1>
+    <p>좋은말을 고르면 +1점, 나쁜말을 고르면 -1점!</p>
+  </header>
+
+  <main>
+    <section id="startPanel" class="panel">
+      <h2>입장하기</h2>
+      <div class="row">
+        <button id="teacherLoginBtn">강사로 입장</button>
+        <button id="studentModeBtn" class="secondary">학생으로 입장</button>
+      </div>
+      <p class="message" id="startMessage"></p>
+    </section>
+
+    <section id="studentJoinPanel" class="panel hidden">
+      <h2>학생 입장</h2>
+      <div class="row">
+        <input id="roomCodeInput" placeholder="방 코드 입력" />
+        <input id="nicknameInput" placeholder="닉네임 입력" />
+        <button id="studentJoinBtn">입장</button>
+      </div>
+      <p class="message" id="studentJoinMessage"></p>
+    </section>
+
+    <section id="teacherPanel" class="panel hidden">
+      <h2>강사 화면</h2>
+      <p>방 코드: <span id="teacherRoomCode" class="badge"></span></p>
+
+      <div class="row">
+        <button id="createRoomBtn">새 방 만들기</button>
+        <button id="startGameBtn">게임 시작</button>
+        <button id="refreshCardsBtn" class="secondary">카드 바꾸기</button>
+        <button id="resetGameBtn" class="danger">게임 초기화</button>
+      </div>
+
+      <h3>점수판</h3>
+      <table class="scoreboard">
+        <thead>
+          <tr>
+            <th>닉네임</th>
+            <th>점수</th>
+          </tr>
+        </thead>
+        <tbody id="scoreBody"></tbody>
+      </table>
+    </section>
+
+    <section id="gamePanel" class="panel hidden">
+      <h2>학생 게임 화면</h2>
+      <p>내 닉네임: <span id="myNickname" class="badge"></span></p>
+      <p>내 점수: <span id="myScore" class="big-score">0</span></p>
+      <p id="gameStatusMessage" class="message">강사가 게임을 시작하면 카드가 보입니다.</p>
+      <div id="cardGrid" class="card-grid"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInAnonymously,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+    import {
+      getDatabase,
+      ref,
+      set,
+      update,
+      get,
+      onValue,
+      remove
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxYybI64MbweEGolyv_Ikjkug2bVoZghQ",
+      authDomain: "good-bad-card-game.firebaseapp.com",
+      databaseURL: "https://good-bad-card-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "good-bad-card-game",
+      storageBucket: "good-bad-card-game.firebasestorage.app",
+      messagingSenderId: "553884713592",
+      appId: "1:553884713592:web:8818f29cff2f65ad1de38d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    /*
+      중요:
+      아래 이메일을 본인 강사용 Google 이메일로 바꿔야 합니다.
+      예: const TEACHER_EMAILS = ["abc@gmail.com"];
+    */
+    const TEACHER_EMAILS = ["leethemom8@gmail.com"];
+
+    const goodWords = [
+      "고마워", "괜찮아", "미안해", "잘했어", "할 수 있어",
+      "함께하자", "도와줄게", "기다릴게", "응원해", "좋은 생각이야",
+      "천천히 해도 돼", "네 마음 이해해", "다시 해보자", "소중해"
+    ];
+
+    const badWords = [
+      "안 고마워", "안 괜찮아", "별로야", "못 할 거야", "혼자 해",
+      "빨리 해", "틀렸잖아", "왜 그래", "그만해", "네 탓이야",
+      "싫어", "귀찮아", "말 걸지 마", "필요 없어"
+    ];
+
+    let currentUser = null;
+    let currentRoomCode = null;
+    let currentPlayerId = null;
+    let currentNickname = "";
+    let currentCards = [];
+
+    const startPanel = document.getElementById("startPanel");
+    const studentJoinPanel = document.getElementById("studentJoinPanel");
+    const teacherPanel = document.getElementById("teacherPanel");
+    const gamePanel = document.getElementById("gamePanel");
+
+    const teacherLoginBtn = document.getElementById("teacherLoginBtn");
+    const studentModeBtn = document.getElementById("studentModeBtn");
+    const studentJoinBtn = document.getElementById("studentJoinBtn");
+
+    const createRoomBtn = document.getElementById("createRoomBtn");
+    const startGameBtn = document.getElementById("startGameBtn");
+    const refreshCardsBtn = document.getElementById("refreshCardsBtn");
+    const resetGameBtn = document.getElementById("resetGameBtn");
+
+    const teacherRoomCode = document.getElementById("teacherRoomCode");
+    const scoreBody = document.getElementById("scoreBody");
+
+    const roomCodeInput = document.getElementById("roomCodeInput");
+    const nicknameInput = document.getElementById("nicknameInput");
+    const studentJoinMessage = document.getElementById("studentJoinMessage");
+
+    const myNickname = document.getElementById("myNickname");
+    const myScore = document.getElementById("myScore");
+    const gameStatusMessage = document.getElementById("gameStatusMessage");
+    const cardGrid = document.getElementById("cardGrid");
+    const startMessage = document.getElementById("startMessage");
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+    });
+
+    teacherLoginBtn.addEventListener("click", async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const email = result.user.email;
+
+        if (!TEACHER_EMAILS.includes(email)) {
+          startMessage.textContent = "강사로 등록된 이메일이 아닙니다. 코드의 TEACHER_EMAILS를 확인하세요.";
+          return;
+        }
+
+        startPanel.classList.add("hidden");
+        teacherPanel.classList.remove("hidden");
+        await createRoom();
+      } catch (error) {
+        startMessage.textContent = "Google 로그인 중 오류가 발생했습니다.";
+        console.error(error);
+      }
+    });
+
+    studentModeBtn.addEventListener("click", () => {
+      startPanel.classList.add("hidden");
+      studentJoinPanel.classList.remove("hidden");
+    });
+
+    studentJoinBtn.addEventListener("click", async () => {
+      const roomCode = roomCodeInput.value.trim().toUpperCase();
+      const nickname = nicknameInput.value.trim();
+
+      if (!roomCode || !nickname) {
+        studentJoinMessage.textContent = "방 코드와 닉네임을 모두 입력하세요.";
+        return;
+      }
+
+      try {
+        const result = await signInAnonymously(auth);
+        currentUser = result.user;
+        currentRoomCode = roomCode;
+        currentPlayerId = currentUser.uid;
+        currentNickname = nickname;
+
+        const roomSnapshot = await get(ref(db, `rooms/${roomCode}`));
+
+        if (!roomSnapshot.exists()) {
+          studentJoinMessage.textContent = "존재하지 않는 방 코드입니다.";
+          return;
+        }
+
+        await set(ref(db, `rooms/${roomCode}/players/${currentPlayerId}`), {
+          nickname: nickname,
+          score: 0
+        });
+
+        myNickname.textContent = nickname;
+
+        studentJoinPanel.classList.add("hidden");
+        gamePanel.classList.remove("hidden");
+
+        listenRoomForStudent(roomCode);
+      } catch (error) {
+        studentJoinMessage.textContent = "학생 입장 중 오류가 발생했습니다.";
+        console.error(error);
+      }
+    });
+
+    createRoomBtn.addEventListener("click", createRoom);
+
+    startGameBtn.addEventListener("click", async () => {
+      if (!currentRoomCode) return;
+
+      const cards = makeRandomCards();
+
+      await update(ref(db, `rooms/${currentRoomCode}`), {
+        status: "playing",
+        cards: cards,
+        updatedAt: Date.now()
+      });
+    });
+
+    refreshCardsBtn.addEventListener("click", async () => {
+      if (!currentRoomCode) return;
+
+      const cards = makeRandomCards();
+
+      await update(ref(db, `rooms/${currentRoomCode}`), {
+        cards: cards,
+        updatedAt: Date.now()
+      });
+    });
+
+    resetGameBtn.addEventListener("click", async () => {
+      if (!currentRoomCode) return;
+
+      const ok = confirm("정말 게임을 초기화할까요?");
+      if (!ok) return;
+
+      await remove(ref(db, `rooms/${currentRoomCode}`));
+      await createRoom();
+    });
+
+    async function createRoom() {
+      currentRoomCode = makeRoomCode();
+      teacherRoomCode.textContent = currentRoomCode;
+
+      await set(ref(db, `rooms/${currentRoomCode}`), {
+        status: "waiting",
+        cards: [],
+        createdAt: Date.now()
+      });
+
+      listenRoomForTeacher(currentRoomCode);
+    }
+
+    function makeRoomCode() {
+      const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 5; i++) {
+        code += letters[Math.floor(Math.random() * letters.length)];
+      }
+      return code;
+    }
+
+    function makeRandomCards() {
+      const selectedGood = shuffle(goodWords).slice(0, 6).map(word => ({
+        text: word,
+        type: "good"
+      }));
+
+      const selectedBad = shuffle(badWords).slice(0, 6).map(word => ({
+        text: word,
+        type: "bad"
+      }));
+
+      return shuffle([...selectedGood, ...selectedBad]);
+    }
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function listenRoomForTeacher(roomCode) {
+      onValue(ref(db, `rooms/${roomCode}/players`), (snapshot) => {
+        const players = snapshot.val() || {};
+        const playerList = Object.values(players).sort((a, b) => b.score - a.score);
+
+        scoreBody.innerHTML = "";
+
+        playerList.forEach(player => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${escapeHtml(player.nickname)}</td>
+            <td>${player.score}</td>
+          `;
+          scoreBody.appendChild(tr);
+        });
+      });
+    }
+
+    function listenRoomForStudent(roomCode) {
+      onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
+        const room = snapshot.val();
+
+        if (!room) {
+          gameStatusMessage.textContent = "방이 종료되었습니다.";
+          cardGrid.innerHTML = "";
+          return;
+        }
+
+        if (room.status !== "playing") {
+          gameStatusMessage.textContent = "강사가 게임을 시작하면 카드가 보입니다.";
+          cardGrid.innerHTML = "";
+          return;
+        }
+
+        currentCards = room.cards || [];
+        gameStatusMessage.textContent = "좋은말만 골라서 클릭하세요.";
+        renderCards(currentCards);
+      });
+
+      onValue(ref(db, `rooms/${roomCode}/players/${currentPlayerId}/score`), (snapshot) => {
+        myScore.textContent = snapshot.val() ?? 0;
+      });
+    }
+
+    function renderCards(cards) {
+      cardGrid.innerHTML = "";
+
+      cards.forEach((card, index) => {
+        const div = document.createElement("div");
+        div.className = "word-card";
+        div.textContent = card.text;
+
+        div.addEventListener("click", () => {
+          clickCard(card, div);
+        });
+
+        cardGrid.appendChild(div);
+      });
+    }
+
+    async function clickCard(card, cardElement) {
+      if (!currentRoomCode || !currentPlayerId) return;
+
+      const scoreRef = ref(db, `rooms/${currentRoomCode}/players/${currentPlayerId}/score`);
+      const snapshot = await get(scoreRef);
+      const currentScore = snapshot.val() ?? 0;
+
+      const point = card.type === "good" ? 1 : -1;
+      const nextScore = currentScore + point;
+
+      await set(scoreRef, nextScore);
+
+      cardElement.style.pointerEvents = "none";
+      cardElement.style.opacity = "0.45";
+
+      if (point > 0) {
+        cardElement.textContent = "정답 +1";
+      } else {
+        cardElement.textContent = "감점 -1";
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    setInterval(async () => {
+      if (!currentRoomCode) return;
+      if (!auth.currentUser) return;
+      if (!auth.currentUser.email) return;
+      if (!TEACHER_EMAILS.includes(auth.currentUser.email)) return;
+
+      const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
+      const room = roomSnapshot.val();
+
+      if (!room || room.status !== "playing") return;
+
+      const cards = makeRandomCards();
+
+      await update(ref(db, `rooms/${currentRoomCode}`), {
+        cards: cards,
+        updatedAt: Date.now()
+      });
+    }, 15000);
+  </script>
 </body>
 </html>
