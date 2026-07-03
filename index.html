@@ -65,11 +65,12 @@
       background: #ff5a5a;
     }
 
-    input {
+    input, select {
       padding: 12px;
       border: 1px solid #ccc;
       border-radius: 10px;
       font-size: 16px;
+      background: white;
     }
 
     .hidden {
@@ -143,10 +144,10 @@
       display: inline-block;
       background: #fff3cd;
       color: #8a5a00;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 999px;
       font-weight: bold;
-      font-size: 20px;
+      font-size: 22px;
     }
 
     .big-score {
@@ -203,27 +204,37 @@
       </div>
 
       <p class="message error" id="startMessage"></p>
-      <p class="hint">
-        강사용 비밀번호를 입력하면 강사 화면으로 입장합니다.
-      </p>
+      <p class="hint">강사용 비밀번호를 입력하면 강사 화면으로 입장합니다.</p>
     </section>
 
     <section id="studentJoinPanel" class="panel hidden">
       <h2>학생 입장</h2>
+
       <div class="row">
         <input id="roomCodeInput" placeholder="방 코드 입력" />
         <input id="nicknameInput" placeholder="닉네임 입력" />
         <button id="studentJoinBtn">입장</button>
       </div>
+
       <p class="message error" id="studentJoinMessage"></p>
     </section>
 
     <section id="teacherPanel" class="panel hidden">
       <h2>강사 화면</h2>
+
       <p>방 코드: <span id="teacherRoomCode" class="badge"></span></p>
-      <p>다음 카드 변경까지: <span id="teacherTimer" class="timer-badge">대기</span></p>
+      <p>게임 남은 시간: <span id="teacherGameTimer" class="timer-badge">대기</span></p>
 
       <div class="row">
+        <label>
+          카드 변경 속도:
+          <select id="cardSpeedSelect">
+            <option value="3">3초</option>
+            <option value="5" selected>5초</option>
+            <option value="10">10초</option>
+          </select>
+        </label>
+
         <button id="createRoomBtn">새 방 만들기</button>
         <button id="startGameBtn">게임 시작</button>
         <button id="refreshCardsBtn" class="secondary">카드 바꾸기</button>
@@ -231,7 +242,7 @@
       </div>
 
       <p class="hint">
-        학생은 방 코드를 입력하고 입장합니다. 게임 시작 후 카드가 3초마다 자동으로 바뀝니다.
+        게임 시간은 60초입니다. 카드 변경 속도는 강사가 3초, 5초, 10초 중 선택할 수 있습니다.
       </p>
 
       <h3>점수판</h3>
@@ -248,9 +259,15 @@
 
     <section id="gamePanel" class="panel hidden">
       <h2>학생 게임 화면</h2>
+
       <p>내 닉네임: <span id="myNickname" class="badge"></span></p>
       <p>내 점수: <span id="myScore" class="big-score">0</span></p>
-      <p id="gameStatusMessage" class="message">강사가 게임을 시작하면 카드가 보입니다.</p>
+      <p>게임 남은 시간: <span id="studentGameTimer" class="timer-badge">대기</span></p>
+
+      <p id="gameStatusMessage" class="message">
+        강사가 게임을 시작하면 카드가 보입니다.
+      </p>
+
       <div id="cardGrid" class="card-grid"></div>
     </section>
   </main>
@@ -285,9 +302,7 @@
     };
 
     const TEACHER_PASSWORD = "admin";
-
-    const CARD_CHANGE_SECONDS = 3;
-    const CARD_CHANGE_MS = CARD_CHANGE_SECONDS * 1000;
+    const GAME_DURATION_SECONDS = 60;
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -355,9 +370,10 @@
     let currentNickname = "";
     let isTeacher = false;
 
-    let remainingSeconds = CARD_CHANGE_SECONDS;
-    let teacherTimerInterval = null;
     let cardChangeInterval = null;
+    let teacherGameTimerInterval = null;
+    let studentGameTimerInterval = null;
+    let gameEndAt = null;
 
     const startPanel = document.getElementById("startPanel");
     const studentJoinPanel = document.getElementById("studentJoinPanel");
@@ -373,9 +389,10 @@
     const startGameBtn = document.getElementById("startGameBtn");
     const refreshCardsBtn = document.getElementById("refreshCardsBtn");
     const resetGameBtn = document.getElementById("resetGameBtn");
+    const cardSpeedSelect = document.getElementById("cardSpeedSelect");
 
     const teacherRoomCode = document.getElementById("teacherRoomCode");
-    const teacherTimer = document.getElementById("teacherTimer");
+    const teacherGameTimer = document.getElementById("teacherGameTimer");
     const scoreBody = document.getElementById("scoreBody");
 
     const roomCodeInput = document.getElementById("roomCodeInput");
@@ -384,6 +401,7 @@
 
     const myNickname = document.getElementById("myNickname");
     const myScore = document.getElementById("myScore");
+    const studentGameTimer = document.getElementById("studentGameTimer");
     const gameStatusMessage = document.getElementById("gameStatusMessage");
     const cardGrid = document.getElementById("cardGrid");
     const startMessage = document.getElementById("startMessage");
@@ -483,15 +501,23 @@
     startGameBtn.addEventListener("click", async () => {
       if (!currentRoomCode) return;
 
+      stopTeacherIntervals();
+
+      const selectedCardSeconds = Number(cardSpeedSelect.value);
       const cards = makeRandomCards();
+      gameEndAt = Date.now() + GAME_DURATION_SECONDS * 1000;
 
       await update(ref(db, `rooms/${currentRoomCode}`), {
         status: "playing",
         cards: cards,
+        cardChangeSeconds: selectedCardSeconds,
+        gameDurationSeconds: GAME_DURATION_SECONDS,
+        gameEndAt: gameEndAt,
         updatedAt: Date.now()
       });
 
-      startAutoCardChange();
+      startTeacherGameTimer(gameEndAt);
+      startAutoCardChange(selectedCardSeconds);
     });
 
     refreshCardsBtn.addEventListener("click", async () => {
@@ -503,8 +529,6 @@
         cards: cards,
         updatedAt: Date.now()
       });
-
-      resetTeacherTimer();
     });
 
     resetGameBtn.addEventListener("click", async () => {
@@ -513,7 +537,7 @@
       const ok = confirm("정말 게임을 초기화할까요?");
       if (!ok) return;
 
-      stopAutoCardChange();
+      stopTeacherIntervals();
 
       await remove(ref(db, `rooms/${currentRoomCode}`));
       await createRoom();
@@ -522,11 +546,11 @@
     async function createRoom() {
       if (!isTeacher) return;
 
-      stopAutoCardChange();
+      stopTeacherIntervals();
 
       currentRoomCode = makeRoomCode();
       teacherRoomCode.textContent = currentRoomCode;
-      teacherTimer.textContent = "대기";
+      teacherGameTimer.textContent = "대기";
 
       await set(ref(db, `rooms/${currentRoomCode}`), {
         status: "waiting",
@@ -570,19 +594,19 @@
       return [...array].sort(() => Math.random() - 0.5);
     }
 
-    function startAutoCardChange() {
-      stopAutoCardChange();
-      startTeacherTimer();
+    function startAutoCardChange(cardSeconds) {
+      clearInterval(cardChangeInterval);
 
       cardChangeInterval = setInterval(async () => {
         if (!isTeacher) return;
         if (!currentRoomCode) return;
         if (!auth.currentUser) return;
+        if (!gameEndAt) return;
 
-        const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
-        const room = roomSnapshot.val();
-
-        if (!room || room.status !== "playing") return;
+        if (Date.now() >= gameEndAt) {
+          await endGame();
+          return;
+        }
 
         const cards = makeRandomCards();
 
@@ -590,49 +614,70 @@
           cards: cards,
           updatedAt: Date.now()
         });
-
-        resetTeacherTimer();
-      }, CARD_CHANGE_MS);
+      }, cardSeconds * 1000);
     }
 
-    function stopAutoCardChange() {
-      clearInterval(cardChangeInterval);
-      clearInterval(teacherTimerInterval);
+    function startTeacherGameTimer(endAt) {
+      clearInterval(teacherGameTimerInterval);
 
-      cardChangeInterval = null;
-      teacherTimerInterval = null;
-      remainingSeconds = CARD_CHANGE_SECONDS;
+      updateTeacherTimerText(endAt);
 
-      if (teacherTimer) {
-        teacherTimer.textContent = "대기";
-      }
-    }
+      teacherGameTimerInterval = setInterval(async () => {
+        const remaining = getRemainingSeconds(endAt);
+        teacherGameTimer.textContent = remaining + "초";
 
-    function startTeacherTimer() {
-      clearInterval(teacherTimerInterval);
-
-      remainingSeconds = CARD_CHANGE_SECONDS;
-      teacherTimer.textContent = remainingSeconds + "초";
-
-      teacherTimerInterval = setInterval(() => {
-        if (!isTeacher || !currentRoomCode) return;
-
-        remainingSeconds -= 1;
-
-        if (remainingSeconds <= 0) {
-          remainingSeconds = CARD_CHANGE_SECONDS;
+        if (remaining <= 0) {
+          await endGame();
         }
-
-        teacherTimer.textContent = remainingSeconds + "초";
       }, 1000);
     }
 
-    function resetTeacherTimer() {
-      remainingSeconds = CARD_CHANGE_SECONDS;
+    function updateTeacherTimerText(endAt) {
+      teacherGameTimer.textContent = getRemainingSeconds(endAt) + "초";
+    }
 
-      if (teacherTimer) {
-        teacherTimer.textContent = remainingSeconds + "초";
-      }
+    function startStudentGameTimer(endAt) {
+      clearInterval(studentGameTimerInterval);
+
+      studentGameTimer.textContent = getRemainingSeconds(endAt) + "초";
+
+      studentGameTimerInterval = setInterval(() => {
+        const remaining = getRemainingSeconds(endAt);
+        studentGameTimer.textContent = remaining + "초";
+
+        if (remaining <= 0) {
+          clearInterval(studentGameTimerInterval);
+          studentGameTimer.textContent = "종료";
+          gameStatusMessage.textContent = "게임이 종료되었습니다.";
+          cardGrid.innerHTML = "";
+        }
+      }, 1000);
+    }
+
+    function getRemainingSeconds(endAt) {
+      return Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    }
+
+    async function endGame() {
+      if (!currentRoomCode) return;
+
+      stopTeacherIntervals();
+
+      teacherGameTimer.textContent = "종료";
+
+      await update(ref(db, `rooms/${currentRoomCode}`), {
+        status: "ended",
+        cards: [],
+        endedAt: Date.now()
+      });
+    }
+
+    function stopTeacherIntervals() {
+      clearInterval(cardChangeInterval);
+      clearInterval(teacherGameTimerInterval);
+
+      cardChangeInterval = null;
+      teacherGameTimerInterval = null;
     }
 
     function listenRoomForTeacher(roomCode) {
@@ -661,22 +706,42 @@
 
         if (!room) {
           gameStatusMessage.textContent = "방이 종료되었습니다.";
+          studentGameTimer.textContent = "종료";
           cardGrid.innerHTML = "";
           return;
         }
 
-        if (room.status !== "playing") {
+        if (room.status === "waiting") {
           gameStatusMessage.textContent = "강사가 게임을 시작하면 카드가 보입니다.";
+          studentGameTimer.textContent = "대기";
           cardGrid.innerHTML = "";
           return;
         }
 
-        const cards = Array.isArray(room.cards)
-          ? room.cards
-          : Object.values(room.cards || {});
+        if (room.status === "ended") {
+          clearInterval(studentGameTimerInterval);
+          gameStatusMessage.textContent = "게임이 종료되었습니다.";
+          studentGameTimer.textContent = "종료";
+          cardGrid.innerHTML = "";
+          return;
+        }
 
-        gameStatusMessage.textContent = "좋은말만 골라서 클릭하세요.";
-        renderCards(cards);
+        if (room.status === "playing") {
+          if (room.gameEndAt) {
+            startStudentGameTimer(room.gameEndAt);
+          }
+
+          const cards = Array.isArray(room.cards)
+            ? room.cards
+            : Object.values(room.cards || {});
+
+          gameStatusMessage.textContent =
+            "좋은말만 골라서 클릭하세요. 카드 변경 속도: " +
+            (room.cardChangeSeconds || "?") +
+            "초";
+
+          renderCards(cards);
+        }
       });
 
       onValue(ref(db, `rooms/${roomCode}/players/${currentPlayerId}/score`), (snapshot) => {
@@ -703,6 +768,11 @@
 
     async function clickCard(card, cardElement) {
       if (!currentRoomCode || !currentPlayerId) return;
+
+      const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
+      const room = roomSnapshot.val();
+
+      if (!room || room.status !== "playing") return;
 
       const scoreRef = ref(
         db,
@@ -732,6 +802,7 @@
 
     function playCorrectSound() {
       playTone(740, 0.08, 0.05);
+
       setTimeout(() => {
         playTone(980, 0.12, 0.04);
       }, 90);
@@ -739,6 +810,7 @@
 
     function playWrongSound() {
       playTone(260, 0.12, 0.06);
+
       setTimeout(() => {
         playTone(180, 0.16, 0.05);
       }, 110);
