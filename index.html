@@ -136,6 +136,17 @@
       margin-top: 12px;
       font-weight: bold;
       color: #333;
+      word-break: break-word;
+    }
+
+    .error {
+      color: #d93025;
+    }
+
+    .hint {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -153,7 +164,10 @@
         <button id="teacherLoginBtn">강사로 입장</button>
         <button id="studentModeBtn" class="secondary">학생으로 입장</button>
       </div>
-      <p class="message" id="startMessage"></p>
+      <p class="message error" id="startMessage"></p>
+      <p class="hint">
+        강사는 Google 로그인, 학생은 익명 로그인으로 입장합니다.
+      </p>
     </section>
 
     <section id="studentJoinPanel" class="panel hidden">
@@ -163,7 +177,7 @@
         <input id="nicknameInput" placeholder="닉네임 입력" />
         <button id="studentJoinBtn">입장</button>
       </div>
-      <p class="message" id="studentJoinMessage"></p>
+      <p class="message error" id="studentJoinMessage"></p>
     </section>
 
     <section id="teacherPanel" class="panel hidden">
@@ -176,6 +190,10 @@
         <button id="refreshCardsBtn" class="secondary">카드 바꾸기</button>
         <button id="resetGameBtn" class="danger">게임 초기화</button>
       </div>
+
+      <p class="hint">
+        학생은 방 코드를 입력하고 입장합니다. 게임 시작 후 카드가 보입니다.
+      </p>
 
       <h3>점수판</h3>
       <table class="scoreboard">
@@ -200,6 +218,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+
     import {
       getAuth,
       GoogleAuthProvider,
@@ -234,28 +253,48 @@
 
     /*
       중요:
-      아래 이메일을 본인 강사용 Google 이메일로 바꿔야 합니다.
-      예: const TEACHER_EMAILS = ["abc@gmail.com"];
+      아래 이메일은 강사로 로그인할 Google 이메일과 완전히 같아야 합니다.
     */
-    const TEACHER_EMAILS = ["leethemom8@gmail.com"];
+    const TEACHER_EMAILS = ["leethemon8@gmail.com"];
 
     const goodWords = [
-      "고마워", "괜찮아", "미안해", "잘했어", "할 수 있어",
-      "함께하자", "도와줄게", "기다릴게", "응원해", "좋은 생각이야",
-      "천천히 해도 돼", "네 마음 이해해", "다시 해보자", "소중해"
+      "고마워",
+      "괜찮아",
+      "미안해",
+      "잘했어",
+      "할 수 있어",
+      "함께하자",
+      "도와줄게",
+      "기다릴게",
+      "응원해",
+      "좋은 생각이야",
+      "천천히 해도 돼",
+      "네 마음 이해해",
+      "다시 해보자",
+      "소중해"
     ];
 
     const badWords = [
-      "안 고마워", "안 괜찮아", "별로야", "못 할 거야", "혼자 해",
-      "빨리 해", "틀렸잖아", "왜 그래", "그만해", "네 탓이야",
-      "싫어", "귀찮아", "말 걸지 마", "필요 없어"
+      "안 고마워",
+      "안 괜찮아",
+      "별로야",
+      "못 할 거야",
+      "혼자 해",
+      "빨리 해",
+      "틀렸잖아",
+      "왜 그래",
+      "그만해",
+      "네 탓이야",
+      "싫어",
+      "귀찮아",
+      "말 걸지 마",
+      "필요 없어"
     ];
 
     let currentUser = null;
     let currentRoomCode = null;
     let currentPlayerId = null;
     let currentNickname = "";
-    let currentCards = [];
 
     const startPanel = document.getElementById("startPanel");
     const studentJoinPanel = document.getElementById("studentJoinPanel");
@@ -289,31 +328,40 @@
     });
 
     teacherLoginBtn.addEventListener("click", async () => {
+      startMessage.textContent = "";
+
       try {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const email = result.user.email;
 
         if (!TEACHER_EMAILS.includes(email)) {
-          startMessage.textContent = "강사로 등록된 이메일이 아닙니다. 코드의 TEACHER_EMAILS를 확인하세요.";
+          startMessage.textContent =
+            "강사로 등록된 이메일이 아닙니다. 현재 로그인 이메일: " + email;
           return;
         }
 
         startPanel.classList.add("hidden");
         teacherPanel.classList.remove("hidden");
+
         await createRoom();
       } catch (error) {
-        startMessage.textContent = "Google 로그인 중 오류가 발생했습니다.";
-        console.error(error);
+        startMessage.textContent =
+          "Google 로그인 오류: " + error.code + " / " + error.message;
+
+        console.error("Google login error:", error);
       }
     });
 
     studentModeBtn.addEventListener("click", () => {
+      startMessage.textContent = "";
       startPanel.classList.add("hidden");
       studentJoinPanel.classList.remove("hidden");
     });
 
     studentJoinBtn.addEventListener("click", async () => {
+      studentJoinMessage.textContent = "";
+
       const roomCode = roomCodeInput.value.trim().toUpperCase();
       const nickname = nicknameInput.value.trim();
 
@@ -324,6 +372,7 @@
 
       try {
         const result = await signInAnonymously(auth);
+
         currentUser = result.user;
         currentRoomCode = roomCode;
         currentPlayerId = currentUser.uid;
@@ -348,8 +397,10 @@
 
         listenRoomForStudent(roomCode);
       } catch (error) {
-        studentJoinMessage.textContent = "학생 입장 중 오류가 발생했습니다.";
-        console.error(error);
+        studentJoinMessage.textContent =
+          "학생 입장 오류: " + error.code + " / " + error.message;
+
+        console.error("Student join error:", error);
       }
     });
 
@@ -404,22 +455,28 @@
     function makeRoomCode() {
       const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let code = "";
+
       for (let i = 0; i < 5; i++) {
         code += letters[Math.floor(Math.random() * letters.length)];
       }
+
       return code;
     }
 
     function makeRandomCards() {
-      const selectedGood = shuffle(goodWords).slice(0, 6).map(word => ({
-        text: word,
-        type: "good"
-      }));
+      const selectedGood = shuffle(goodWords)
+        .slice(0, 6)
+        .map((word) => ({
+          text: word,
+          type: "good"
+        }));
 
-      const selectedBad = shuffle(badWords).slice(0, 6).map(word => ({
-        text: word,
-        type: "bad"
-      }));
+      const selectedBad = shuffle(badWords)
+        .slice(0, 6)
+        .map((word) => ({
+          text: word,
+          type: "bad"
+        }));
 
       return shuffle([...selectedGood, ...selectedBad]);
     }
@@ -435,12 +492,14 @@
 
         scoreBody.innerHTML = "";
 
-        playerList.forEach(player => {
+        playerList.forEach((player) => {
           const tr = document.createElement("tr");
+
           tr.innerHTML = `
             <td>${escapeHtml(player.nickname)}</td>
             <td>${player.score}</td>
           `;
+
           scoreBody.appendChild(tr);
         });
       });
@@ -462,9 +521,10 @@
           return;
         }
 
-        currentCards = room.cards || [];
+        const cards = room.cards || [];
+
         gameStatusMessage.textContent = "좋은말만 골라서 클릭하세요.";
-        renderCards(currentCards);
+        renderCards(cards);
       });
 
       onValue(ref(db, `rooms/${roomCode}/players/${currentPlayerId}/score`), (snapshot) => {
@@ -475,8 +535,9 @@
     function renderCards(cards) {
       cardGrid.innerHTML = "";
 
-      cards.forEach((card, index) => {
+      cards.forEach((card) => {
         const div = document.createElement("div");
+
         div.className = "word-card";
         div.textContent = card.text;
 
@@ -491,7 +552,11 @@
     async function clickCard(card, cardElement) {
       if (!currentRoomCode || !currentPlayerId) return;
 
-      const scoreRef = ref(db, `rooms/${currentRoomCode}/players/${currentPlayerId}/score`);
+      const scoreRef = ref(
+        db,
+        `rooms/${currentRoomCode}/players/${currentPlayerId}/score`
+      );
+
       const snapshot = await get(scoreRef);
       const currentScore = snapshot.val() ?? 0;
 
