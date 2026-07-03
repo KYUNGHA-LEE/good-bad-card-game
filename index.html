@@ -160,13 +160,16 @@
   <main>
     <section id="startPanel" class="panel">
       <h2>입장하기</h2>
+
       <div class="row">
+        <input id="teacherPasswordInput" type="text" placeholder="강사 비밀번호 입력" value="admin" />
         <button id="teacherLoginBtn">강사로 입장</button>
         <button id="studentModeBtn" class="secondary">학생으로 입장</button>
       </div>
+
       <p class="message error" id="startMessage"></p>
       <p class="hint">
-        강사는 Google 로그인, 학생은 익명 로그인으로 입장합니다.
+        강사 비밀번호는 화면에 보이도록 설정되어 있습니다. 현재 비밀번호는 admin입니다.
       </p>
     </section>
 
@@ -221,8 +224,6 @@
 
     import {
       getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
       signInAnonymously,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
@@ -238,7 +239,7 @@
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCxYybI64MbweEGolyv_Ikjkug2bVoZghQ",
+      apiKey: "AIzaSyCxYybI64MBweEGolyv_IKjkug2bVoZghQ",
       authDomain: "good-bad-card-game.firebaseapp.com",
       databaseURL: "https://good-bad-card-game-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "good-bad-card-game",
@@ -247,15 +248,11 @@
       appId: "1:553884713592:web:8818f29cff2f65ad1de38d"
     };
 
+    const TEACHER_PASSWORD = "admin";
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-
-    /*
-      중요:
-      아래 이메일은 강사로 로그인할 Google 이메일과 완전히 같아야 합니다.
-    */
-    const TEACHER_EMAILS = ["leethemom8@gmail.com"];
 
     const goodWords = [
       "고마워",
@@ -295,12 +292,14 @@
     let currentRoomCode = null;
     let currentPlayerId = null;
     let currentNickname = "";
+    let isTeacher = false;
 
     const startPanel = document.getElementById("startPanel");
     const studentJoinPanel = document.getElementById("studentJoinPanel");
     const teacherPanel = document.getElementById("teacherPanel");
     const gamePanel = document.getElementById("gamePanel");
 
+    const teacherPasswordInput = document.getElementById("teacherPasswordInput");
     const teacherLoginBtn = document.getElementById("teacherLoginBtn");
     const studentModeBtn = document.getElementById("studentModeBtn");
     const studentJoinBtn = document.getElementById("studentJoinBtn");
@@ -330,16 +329,18 @@
     teacherLoginBtn.addEventListener("click", async () => {
       startMessage.textContent = "";
 
-      try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const email = result.user.email;
+      const password = teacherPasswordInput.value.trim();
 
-        if (!TEACHER_EMAILS.includes(email)) {
-          startMessage.textContent =
-            "강사로 등록된 이메일이 아닙니다. 현재 로그인 이메일: " + email;
-          return;
-        }
+      if (password !== TEACHER_PASSWORD) {
+        startMessage.textContent = "강사 비밀번호가 틀렸습니다.";
+        return;
+      }
+
+      try {
+        const result = await signInAnonymously(auth);
+
+        currentUser = result.user;
+        isTeacher = true;
 
         startPanel.classList.add("hidden");
         teacherPanel.classList.remove("hidden");
@@ -347,9 +348,9 @@
         await createRoom();
       } catch (error) {
         startMessage.textContent =
-          "Google 로그인 오류: " + error.code + " / " + error.message;
+          "강사 입장 오류: " + error.code + " / " + error.message;
 
-        console.error("Google login error:", error);
+        console.error("Teacher login error:", error);
       }
     });
 
@@ -440,6 +441,8 @@
     });
 
     async function createRoom() {
+      if (!isTeacher) return;
+
       currentRoomCode = makeRoomCode();
       teacherRoomCode.textContent = currentRoomCode;
 
@@ -585,10 +588,9 @@
     }
 
     setInterval(async () => {
+      if (!isTeacher) return;
       if (!currentRoomCode) return;
       if (!auth.currentUser) return;
-      if (!auth.currentUser.email) return;
-      if (!TEACHER_EMAILS.includes(auth.currentUser.email)) return;
 
       const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
       const room = roomSnapshot.val();
