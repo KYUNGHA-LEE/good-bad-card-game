@@ -25,7 +25,7 @@
     }
 
     main {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 24px;
     }
@@ -78,30 +78,43 @@
 
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
       margin-top: 18px;
     }
 
     .word-card {
-      min-height: 100px;
+      min-height: 92px;
       border-radius: 18px;
       background: white;
       border: 3px solid #dbe3ff;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
       cursor: pointer;
-      transition: transform 0.15s, background 0.15s;
-      padding: 12px;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+      padding: 10px;
+      user-select: none;
     }
 
     .word-card:hover {
       transform: scale(1.04);
       background: #f0f4ff;
+    }
+
+    .word-card.correct {
+      background: #e7f8ee;
+      border-color: #34a853;
+      color: #137333;
+    }
+
+    .word-card.wrong {
+      background: #fdeaea;
+      border-color: #ea4335;
+      color: #b3261e;
     }
 
     .scoreboard {
@@ -126,6 +139,16 @@
       font-weight: bold;
     }
 
+    .timer-badge {
+      display: inline-block;
+      background: #fff3cd;
+      color: #8a5a00;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
     .big-score {
       font-size: 36px;
       font-weight: bold;
@@ -148,6 +171,18 @@
       font-size: 14px;
       line-height: 1.6;
     }
+
+    @media (max-width: 800px) {
+      .card-grid {
+        gap: 8px;
+      }
+
+      .word-card {
+        min-height: 70px;
+        font-size: 16px;
+        padding: 6px;
+      }
+    }
   </style>
 </head>
 
@@ -162,7 +197,7 @@
       <h2>입장하기</h2>
 
       <div class="row">
-        <input id="teacherPasswordInput" type="password" placeholder="강사 비밀번호 입력"  />
+        <input id="teacherPasswordInput" type="password" placeholder="강사 비밀번호 입력" />
         <button id="teacherLoginBtn">강사로 입장</button>
         <button id="studentModeBtn" class="secondary">학생으로 입장</button>
       </div>
@@ -186,6 +221,7 @@
     <section id="teacherPanel" class="panel hidden">
       <h2>강사 화면</h2>
       <p>방 코드: <span id="teacherRoomCode" class="badge"></span></p>
+      <p>다음 카드 변경까지: <span id="teacherTimer" class="timer-badge">대기</span></p>
 
       <div class="row">
         <button id="createRoomBtn">새 방 만들기</button>
@@ -195,7 +231,7 @@
       </div>
 
       <p class="hint">
-        학생은 방 코드를 입력하고 입장합니다. 게임 시작 후 카드가 보입니다.
+        학생은 방 코드를 입력하고 입장합니다. 게임 시작 후 카드가 3초마다 자동으로 바뀝니다.
       </p>
 
       <h3>점수판</h3>
@@ -250,6 +286,9 @@
 
     const TEACHER_PASSWORD = "admin";
 
+    const CARD_CHANGE_SECONDS = 3;
+    const CARD_CHANGE_MS = CARD_CHANGE_SECONDS * 1000;
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
@@ -268,7 +307,18 @@
       "천천히 해도 돼",
       "네 마음 이해해",
       "다시 해보자",
-      "소중해"
+      "소중해",
+      "멋진 생각이야",
+      "네 편이야",
+      "괜찮아질 거야",
+      "용기 내",
+      "같이 해보자",
+      "잘 듣고 있어",
+      "충분히 잘하고 있어",
+      "포기하지 말자",
+      "고생했어",
+      "믿고 있어",
+      "도움이 필요하면 말해줘"
     ];
 
     const badWords = [
@@ -285,7 +335,18 @@
       "싫어",
       "귀찮아",
       "말 걸지 마",
-      "필요 없어"
+      "필요 없어",
+      "너 때문이야",
+      "이상해",
+      "못하네",
+      "가만히 있어",
+      "상관없어",
+      "시끄러워",
+      "내가 알 바 아니야",
+      "너나 해",
+      "답답해",
+      "안 도와줄래",
+      "그게 뭐야"
     ];
 
     let currentUser = null;
@@ -293,6 +354,10 @@
     let currentPlayerId = null;
     let currentNickname = "";
     let isTeacher = false;
+
+    let remainingSeconds = CARD_CHANGE_SECONDS;
+    let teacherTimerInterval = null;
+    let cardChangeInterval = null;
 
     const startPanel = document.getElementById("startPanel");
     const studentJoinPanel = document.getElementById("studentJoinPanel");
@@ -310,6 +375,7 @@
     const resetGameBtn = document.getElementById("resetGameBtn");
 
     const teacherRoomCode = document.getElementById("teacherRoomCode");
+    const teacherTimer = document.getElementById("teacherTimer");
     const scoreBody = document.getElementById("scoreBody");
 
     const roomCodeInput = document.getElementById("roomCodeInput");
@@ -325,12 +391,14 @@
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
     });
+
     teacherPasswordInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    teacherLoginBtn.click();
-    }
-  });
+      if (event.key === "Enter") {
+        event.preventDefault();
+        teacherLoginBtn.click();
+      }
+    });
+
     teacherLoginBtn.addEventListener("click", async () => {
       startMessage.textContent = "";
 
@@ -422,6 +490,8 @@
         cards: cards,
         updatedAt: Date.now()
       });
+
+      startAutoCardChange();
     });
 
     refreshCardsBtn.addEventListener("click", async () => {
@@ -433,6 +503,8 @@
         cards: cards,
         updatedAt: Date.now()
       });
+
+      resetTeacherTimer();
     });
 
     resetGameBtn.addEventListener("click", async () => {
@@ -441,6 +513,8 @@
       const ok = confirm("정말 게임을 초기화할까요?");
       if (!ok) return;
 
+      stopAutoCardChange();
+
       await remove(ref(db, `rooms/${currentRoomCode}`));
       await createRoom();
     });
@@ -448,8 +522,11 @@
     async function createRoom() {
       if (!isTeacher) return;
 
+      stopAutoCardChange();
+
       currentRoomCode = makeRoomCode();
       teacherRoomCode.textContent = currentRoomCode;
+      teacherTimer.textContent = "대기";
 
       await set(ref(db, `rooms/${currentRoomCode}`), {
         status: "waiting",
@@ -473,14 +550,14 @@
 
     function makeRandomCards() {
       const selectedGood = shuffle(goodWords)
-        .slice(0, 6)
+        .slice(0, 13)
         .map((word) => ({
           text: word,
           type: "good"
         }));
 
       const selectedBad = shuffle(badWords)
-        .slice(0, 6)
+        .slice(0, 12)
         .map((word) => ({
           text: word,
           type: "bad"
@@ -491,6 +568,71 @@
 
     function shuffle(array) {
       return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function startAutoCardChange() {
+      stopAutoCardChange();
+      startTeacherTimer();
+
+      cardChangeInterval = setInterval(async () => {
+        if (!isTeacher) return;
+        if (!currentRoomCode) return;
+        if (!auth.currentUser) return;
+
+        const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
+        const room = roomSnapshot.val();
+
+        if (!room || room.status !== "playing") return;
+
+        const cards = makeRandomCards();
+
+        await update(ref(db, `rooms/${currentRoomCode}`), {
+          cards: cards,
+          updatedAt: Date.now()
+        });
+
+        resetTeacherTimer();
+      }, CARD_CHANGE_MS);
+    }
+
+    function stopAutoCardChange() {
+      clearInterval(cardChangeInterval);
+      clearInterval(teacherTimerInterval);
+
+      cardChangeInterval = null;
+      teacherTimerInterval = null;
+      remainingSeconds = CARD_CHANGE_SECONDS;
+
+      if (teacherTimer) {
+        teacherTimer.textContent = "대기";
+      }
+    }
+
+    function startTeacherTimer() {
+      clearInterval(teacherTimerInterval);
+
+      remainingSeconds = CARD_CHANGE_SECONDS;
+      teacherTimer.textContent = remainingSeconds + "초";
+
+      teacherTimerInterval = setInterval(() => {
+        if (!isTeacher || !currentRoomCode) return;
+
+        remainingSeconds -= 1;
+
+        if (remainingSeconds <= 0) {
+          remainingSeconds = CARD_CHANGE_SECONDS;
+        }
+
+        teacherTimer.textContent = remainingSeconds + "초";
+      }, 1000);
+    }
+
+    function resetTeacherTimer() {
+      remainingSeconds = CARD_CHANGE_SECONDS;
+
+      if (teacherTimer) {
+        teacherTimer.textContent = remainingSeconds + "초";
+      }
     }
 
     function listenRoomForTeacher(roomCode) {
@@ -529,7 +671,9 @@
           return;
         }
 
-        const cards = room.cards || [];
+        const cards = Array.isArray(room.cards)
+          ? room.cards
+          : Object.values(room.cards || {});
 
         gameStatusMessage.textContent = "좋은말만 골라서 클릭하세요.";
         renderCards(cards);
@@ -574,13 +718,54 @@
       await set(scoreRef, nextScore);
 
       cardElement.style.pointerEvents = "none";
-      cardElement.style.opacity = "0.45";
 
       if (point > 0) {
+        playCorrectSound();
+        cardElement.classList.add("correct");
         cardElement.textContent = "정답 +1";
       } else {
-        cardElement.textContent = "감점 -1";
+        playWrongSound();
+        cardElement.classList.add("wrong");
+        cardElement.textContent = "오답 -1";
       }
+    }
+
+    function playCorrectSound() {
+      playTone(740, 0.08, 0.05);
+      setTimeout(() => {
+        playTone(980, 0.12, 0.04);
+      }, 90);
+    }
+
+    function playWrongSound() {
+      playTone(260, 0.12, 0.06);
+      setTimeout(() => {
+        playTone(180, 0.16, 0.05);
+      }, 110);
+    }
+
+    function playTone(frequency, duration, volume) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+
+      const audioContext = new AudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
+
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + duration
+      );
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
     }
 
     function escapeHtml(text) {
@@ -591,24 +776,6 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
-
-    setInterval(async () => {
-      if (!isTeacher) return;
-      if (!currentRoomCode) return;
-      if (!auth.currentUser) return;
-
-      const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
-      const room = roomSnapshot.val();
-
-      if (!room || room.status !== "playing") return;
-
-      const cards = makeRandomCards();
-
-      await update(ref(db, `rooms/${currentRoomCode}`), {
-        cards: cards,
-        updatedAt: Date.now()
-      });
-    }, 15000);
   </script>
 </body>
 </html>
