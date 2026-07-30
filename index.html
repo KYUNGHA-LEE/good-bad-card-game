@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%AC%3C/text%3E%3C/svg%3E">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>좋은말 나쁜말 카드 게임</title>
 
@@ -301,8 +302,17 @@
       appId: "1:553884713592:web:8818f29cff2f65ad1de38d"
     };
 
-    const TEACHER_PASSWORD = "admin";
+    const TEACHER_PASSWORD = "123123";
     const GAME_DURATION_SECONDS = 60;
+
+    // 강사 입장은 주소 뒤에 ?mode=admin 을 붙였을 때만 노출 (전 게임 공통 규칙)
+    const isAdminMode = new URLSearchParams(location.search).get("mode") === "admin";
+    if (!isAdminMode) {
+      document.getElementById("teacherPasswordInput").classList.add("hidden");
+      document.getElementById("teacherLoginBtn").classList.add("hidden");
+      document.querySelector("#startPanel .hint").textContent =
+        "학생으로 입장을 눌러 방 코드와 닉네임을 입력하세요.";
+    }
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
