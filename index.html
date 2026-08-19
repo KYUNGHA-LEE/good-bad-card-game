@@ -6,37 +6,136 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>좋은말 나쁜말 카드 게임</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg: #F6FBFD;
+      --ink: #4A4F5E;
+      --ink-soft: #7A8496;
+
+      --blue-soft: #CAEAFF;
+      --blue-mid: #A7DEF0;
+      --blue-deep: #5B9FD1;
+      --blue-text: #37698C;
+
+      --pink-soft: #FFDED7;
+      --pink-mid: #FFC9BE;
+      --pink-deep: #E4796C;
+      --pink-text: #A34E42;
+
+      --green-soft: #E4F3DC;
+      --green-mid: #C4E4AF;
+      --green-deep: #7FB069;
+      --green-text: #4B7A3A;
+
+      --yellow-soft: #FDF3D2;
+      --yellow-text: #A87B1F;
+
+      --purple-soft: #EBE5F8;
+      --purple-mid: #D6CBF0;
+      --purple-text: #6B5A9E;
+
+      --line: #E6EFF5;
+      --shadow: 0 10px 24px rgba(120, 160, 185, 0.16);
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #222;
+      font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(560px 360px at 8% -6%, #DFF1FB 0%, rgba(223, 241, 251, 0) 70%),
+        radial-gradient(520px 340px at 96% 4%, #FDE9E3 0%, rgba(253, 233, 227, 0) 70%),
+        radial-gradient(600px 400px at 50% 108%, #EAF5E2 0%, rgba(234, 245, 226, 0) 70%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    h1, h2, h3 {
+      font-family: "Jua", "Gowun Dodum", sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.5px;
     }
 
     header {
-      background: #4f7cff;
-      color: white;
-      padding: 22px;
+      position: relative;
+      background: linear-gradient(135deg, #CAEAFF 0%, #E3E9FB 45%, #FFE3DC 100%);
+      color: var(--blue-text);
+      padding: 34px 22px 46px;
       text-align: center;
+      border-radius: 0 0 40px 40px;
+      overflow: hidden;
     }
 
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 16px;
+      color: #5C6B80;
+    }
+
+    header .deco {
+      position: absolute;
+      font-size: 26px;
+      opacity: 0.75;
+      pointer-events: none;
+    }
+
+    header .deco.d1 { top: 18px; left: 22px; }
+    header .deco.d2 { top: 54px; right: 30px; }
+    header .deco.d3 { bottom: 16px; left: 14%; font-size: 20px; }
+    header .deco.d4 { bottom: 22px; right: 16%; font-size: 20px; }
+
     main {
-      max-width: 1200px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 26px 20px 60px;
     }
 
     .panel {
-      background: white;
-      border-radius: 18px;
-      padding: 22px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      background: rgba(255, 255, 255, 0.92);
+      border: 2px solid var(--line);
+      border-radius: 26px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      color: var(--blue-text);
+    }
+
+    .panel h2 + .sub {
+      margin: 0 0 18px;
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .panel h3 {
+      color: var(--purple-text);
+      font-size: 20px;
+      margin: 26px 0 6px;
+    }
+
+    .wave {
+      height: 10px;
+      margin: 0 0 16px;
+      border-radius: 999px;
+      background: repeating-linear-gradient(90deg, var(--blue-mid) 0 14px, transparent 14px 28px);
+      opacity: 0.55;
     }
 
     .row {
@@ -46,38 +145,78 @@
       align-items: center;
     }
 
+    label.field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #F4FAFD;
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 8px 14px;
+      font-size: 15px;
+      color: var(--blue-text);
+    }
+
     button {
       border: none;
-      border-radius: 12px;
-      padding: 12px 18px;
+      border-radius: 16px;
+      padding: 13px 20px;
+      font-family: "Jua", "Gowun Dodum", sans-serif;
       font-size: 16px;
-      font-weight: bold;
       cursor: pointer;
-      background: #4f7cff;
+      background: var(--blue-deep);
       color: white;
+      box-shadow: 0 4px 10px rgba(91, 159, 209, 0.28);
+      transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.04);
+    }
+
+    button:active {
+      transform: translateY(0);
     }
 
     button.secondary {
-      background: #eef2ff;
-      color: #3155c7;
+      background: #EAF4FA;
+      color: var(--blue-text);
+      box-shadow: none;
+      border: 2px solid var(--blue-soft);
+    }
+
+    button.soft {
+      background: var(--purple-mid);
+      color: var(--purple-text);
+      box-shadow: none;
     }
 
     button.danger {
-      background: #ff5a5a;
+      background: var(--pink-deep);
+      box-shadow: 0 4px 10px rgba(228, 121, 108, 0.28);
     }
 
     input, select {
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
+      padding: 11px 13px;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      font-family: "Gowun Dodum", sans-serif;
       font-size: 16px;
       background: white;
+      color: var(--ink);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--blue-mid);
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
 
+    /* ---------- 좋은말 고르기 카드 ---------- */
     .card-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -86,12 +225,12 @@
     }
 
     .word-card {
-      min-height: 92px;
-      border-radius: 18px;
+      min-height: 96px;
+      border-radius: 22px;
       background: white;
-      border: 3px solid #dbe3ff;
-      font-size: 22px;
-      font-weight: bold;
+      border: 3px solid var(--blue-soft);
+      font-family: "Jua", "Gowun Dodum", sans-serif;
+      font-size: 21px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -100,116 +239,266 @@
       transition: transform 0.15s, background 0.15s, border-color 0.15s;
       padding: 10px;
       user-select: none;
+      color: var(--ink);
+      box-shadow: 0 5px 12px rgba(140, 175, 200, 0.14);
+      word-break: keep-all;
     }
 
     .word-card:hover {
-      transform: scale(1.04);
-      background: #f0f4ff;
+      transform: translateY(-3px) scale(1.03);
+      background: #F6FBFF;
     }
 
     .word-card.correct {
-      background: #e7f8ee;
-      border-color: #34a853;
-      color: #137333;
+      background: var(--green-soft);
+      border-color: var(--green-mid);
+      color: var(--green-text);
     }
 
     .word-card.wrong {
-      background: #fdeaea;
-      border-color: #ea4335;
-      color: #b3261e;
+      background: #FDE6E1;
+      border-color: var(--pink-mid);
+      color: var(--pink-text);
     }
 
+    /* ---------- 기억력 카드 ---------- */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .mem-card {
+      position: relative;
+      aspect-ratio: 3 / 4;
+      perspective: 700px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mem-inner {
+      position: absolute;
+      inset: 0;
+      transition: transform 0.35s;
+      transform-style: preserve-3d;
+    }
+
+    .mem-card.flipped .mem-inner,
+    .mem-card.matched .mem-inner {
+      transform: rotateY(180deg);
+    }
+
+    .mem-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-family: "Jua", "Gowun Dodum", sans-serif;
+      box-shadow: 0 5px 12px rgba(140, 175, 200, 0.16);
+      word-break: keep-all;
+    }
+
+    .mem-back {
+      background: linear-gradient(135deg, #CDE9F6 0%, #E6DFF6 100%);
+      border: 3px solid white;
+      font-size: 30px;
+    }
+
+    .mem-front {
+      background: white;
+      border: 3px solid var(--purple-mid);
+      color: var(--purple-text);
+      font-size: 18px;
+      transform: rotateY(180deg);
+      line-height: 1.3;
+    }
+
+    .mem-card.matched .mem-front {
+      background: var(--green-soft);
+      border-color: var(--green-mid);
+      color: var(--green-text);
+    }
+
+    .mem-card.matched {
+      cursor: default;
+    }
+
+    /* ---------- 점수판 ---------- */
     .scoreboard {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      margin-top: 10px;
     }
 
-    .scoreboard th,
-    .scoreboard td {
-      border-bottom: 1px solid #ddd;
-      padding: 10px;
+    .scoreboard th {
       text-align: left;
+      padding: 6px 14px;
+      font-family: "Jua", sans-serif;
+      color: var(--ink-soft);
+      font-size: 15px;
+      font-weight: 400;
+    }
+
+    .scoreboard td {
+      background: #F7FBFD;
+      padding: 13px 14px;
+      font-size: 16px;
+    }
+
+    .scoreboard td:first-child {
+      border-radius: 14px 0 0 14px;
+      width: 70px;
+      font-family: "Jua", sans-serif;
+      color: var(--ink-soft);
+    }
+
+    .scoreboard td:last-child {
+      border-radius: 0 14px 14px 0;
+      font-family: "Jua", sans-serif;
+      color: var(--blue-deep);
+      font-size: 19px;
+    }
+
+    .scoreboard tr.top td {
+      background: var(--yellow-soft);
     }
 
     .badge {
       display: inline-block;
-      background: #eef2ff;
-      color: #3155c7;
-      padding: 8px 12px;
+      background: var(--blue-soft);
+      color: var(--blue-text);
+      padding: 8px 16px;
       border-radius: 999px;
-      font-weight: bold;
+      font-family: "Jua", sans-serif;
+      letter-spacing: 2px;
     }
 
     .timer-badge {
       display: inline-block;
-      background: #fff3cd;
-      color: #8a5a00;
-      padding: 8px 14px;
+      background: var(--yellow-soft);
+      color: var(--yellow-text);
+      padding: 7px 16px;
       border-radius: 999px;
-      font-weight: bold;
-      font-size: 22px;
+      font-family: "Jua", sans-serif;
+      font-size: 21px;
     }
 
     .big-score {
-      font-size: 36px;
-      font-weight: bold;
-      color: #4f7cff;
+      font-family: "Jua", sans-serif;
+      font-size: 38px;
+      color: var(--blue-deep);
+    }
+
+    .stat-line {
+      margin: 8px 0;
+      font-size: 16px;
     }
 
     .message {
-      margin-top: 12px;
-      font-weight: bold;
-      color: #333;
+      margin-top: 14px;
+      background: #F7FBFD;
+      border: 2px dashed var(--blue-soft);
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: var(--blue-text);
       word-break: break-word;
     }
 
-    .error {
-      color: #d93025;
+    .message.error {
+      background: #FDF0ED;
+      border-color: var(--pink-mid);
+      color: var(--pink-text);
+    }
+
+    .message:empty {
+      display: none;
     }
 
     .hint {
-      color: #555;
+      color: var(--ink-soft);
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.7;
+      margin-top: 14px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      background: var(--purple-soft);
+      color: var(--purple-text);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 14px;
     }
 
     @media (max-width: 800px) {
+      header { padding: 26px 18px 34px; border-radius: 0 0 28px 28px; }
+      header h1 { font-size: 25px; }
+      header .deco { display: none; }
+      main { padding: 18px 14px 50px; }
+      .panel { padding: 18px; border-radius: 22px; }
+
       .card-grid {
+        grid-template-columns: repeat(3, 1fr);
         gap: 8px;
       }
 
       .word-card {
-        min-height: 70px;
+        min-height: 78px;
         font-size: 16px;
+        border-radius: 18px;
         padding: 6px;
       }
+
+      .memory-grid { gap: 8px; }
+      .mem-back { font-size: 24px; }
+      .mem-front { font-size: 14px; }
     }
   </style>
 </head>
 
 <body>
   <header>
+    <span class="deco d1">🌸</span>
+    <span class="deco d2">✨</span>
+    <span class="deco d3">💧</span>
+    <span class="deco d4">🍀</span>
+
     <h1>좋은말 나쁜말 카드 게임</h1>
-    <p>좋은말을 고르면 +1점, 나쁜말을 고르면 -1점!</p>
+    <p>좋은말 고르기 · 기억력 카드 짝맞추기</p>
   </header>
 
   <main>
     <section id="startPanel" class="panel">
       <h2>입장하기</h2>
+      <p class="sub">방 코드와 닉네임만 있으면 바로 시작할 수 있어요.</p>
+      <div class="wave"></div>
 
       <div class="row">
-        <input id="teacherPasswordInput" type="password" placeholder="강사 비밀번호 입력" />
         <button id="teacherLoginBtn">강사로 입장</button>
         <button id="studentModeBtn" class="secondary">학생으로 입장</button>
       </div>
 
       <p class="message error" id="startMessage"></p>
-      <p class="hint">강사용 비밀번호를 입력하면 강사 화면으로 입장합니다.</p>
+      <p class="hint" id="startHint">강사로 입장을 누르면 강사 화면으로 들어갑니다.</p>
     </section>
 
     <section id="studentJoinPanel" class="panel hidden">
       <h2>학생 입장</h2>
+      <p class="sub">칠판에 적힌 방 코드를 입력해 주세요.</p>
+      <div class="wave"></div>
 
       <div class="row">
         <input id="roomCodeInput" placeholder="방 코드 입력" />
@@ -222,13 +511,23 @@
 
     <section id="teacherPanel" class="panel hidden">
       <h2>강사 화면</h2>
+      <p class="sub">게임 종류를 고르고 시작을 누르면 학생 화면이 바뀝니다.</p>
+      <div class="wave"></div>
 
-      <p>방 코드: <span id="teacherRoomCode" class="badge"></span></p>
-      <p>게임 남은 시간: <span id="teacherGameTimer" class="timer-badge">대기</span></p>
+      <p class="stat-line">방 코드: <span id="teacherRoomCode" class="badge"></span></p>
+      <p class="stat-line">남은 시간: <span id="teacherGameTimer" class="timer-badge">대기</span></p>
 
-      <div class="row">
-        <label>
-          카드 변경 속도:
+      <div class="row" style="margin-top:14px">
+        <label class="field">
+          게임 종류
+          <select id="gameTypeSelect">
+            <option value="goodbad" selected>좋은말 고르기</option>
+            <option value="memory">기억력 카드 짝맞추기</option>
+          </select>
+        </label>
+
+        <label class="field" id="goodBadOptions">
+          카드 변경 속도
           <select id="cardSpeedSelect">
             <option value="3">3초</option>
             <option value="5" selected>5초</option>
@@ -236,20 +535,38 @@
           </select>
         </label>
 
-        <button id="createRoomBtn">새 방 만들기</button>
+        <label class="field hidden" id="memorySizeOption">
+          판 크기
+          <select id="memorySizeSelect">
+            <option value="8" selected>4×4 (8쌍)</option>
+            <option value="12">4×6 (12쌍)</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="memoryTimeOption">
+          게임 시간
+          <select id="memoryTimeSelect">
+            <option value="60">60초</option>
+            <option value="90" selected>90초</option>
+            <option value="120">120초</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <button id="createRoomBtn" class="soft">새 방 만들기</button>
         <button id="startGameBtn">게임 시작</button>
         <button id="refreshCardsBtn" class="secondary">카드 바꾸기</button>
         <button id="resetGameBtn" class="danger">게임 초기화</button>
       </div>
 
-      <p class="hint">
-        게임 시간은 60초입니다. 카드 변경 속도는 강사가 3초, 5초, 10초 중 선택할 수 있습니다.
-      </p>
+      <p class="hint" id="teacherHint"></p>
 
       <h3>점수판</h3>
       <table class="scoreboard">
         <thead>
           <tr>
+            <th>순위</th>
             <th>닉네임</th>
             <th>점수</th>
           </tr>
@@ -260,16 +577,21 @@
 
     <section id="gamePanel" class="panel hidden">
       <h2>학생 게임 화면</h2>
+      <div class="wave"></div>
 
-      <p>내 닉네임: <span id="myNickname" class="badge"></span></p>
-      <p>내 점수: <span id="myScore" class="big-score">0</span></p>
-      <p>게임 남은 시간: <span id="studentGameTimer" class="timer-badge">대기</span></p>
+      <p class="stat-line">내 닉네임: <span id="myNickname" class="badge"></span></p>
+      <p class="stat-line">내 점수: <span id="myScore" class="big-score">0</span></p>
+      <p class="stat-line">남은 시간: <span id="studentGameTimer" class="timer-badge">대기</span></p>
 
-      <p id="gameStatusMessage" class="message">
-        강사가 게임을 시작하면 카드가 보입니다.
-      </p>
+      <p id="gameStatusMessage" class="message">강사가 게임을 시작하면 카드가 보입니다.</p>
+
+      <div class="chip-row hidden" id="memoryChips">
+        <span class="chip" id="memoryPairChip">맞춘 짝 0</span>
+        <span class="chip" id="memoryBoardChip">1번째 판</span>
+      </div>
 
       <div id="cardGrid" class="card-grid"></div>
+      <div id="memoryGrid" class="memory-grid hidden"></div>
     </section>
   </main>
 
@@ -302,15 +624,15 @@
       appId: "1:553884713592:web:8818f29cff2f65ad1de38d"
     };
 
-    const TEACHER_PASSWORD = "123123";
-    const GAME_DURATION_SECONDS = 60;
+    const GOODBAD_DURATION_SECONDS = 60;
+    const MEMORY_BONUS_POINT = 3;
 
     // 강사 입장은 주소 뒤에 ?mode=admin 을 붙였을 때만 노출 (전 게임 공통 규칙)
     const isAdminMode = new URLSearchParams(location.search).get("mode") === "admin";
+
     if (!isAdminMode) {
-      document.getElementById("teacherPasswordInput").classList.add("hidden");
       document.getElementById("teacherLoginBtn").classList.add("hidden");
-      document.querySelector("#startPanel .hint").textContent =
+      document.getElementById("startHint").textContent =
         "학생으로 입장을 눌러 방 코드와 닉네임을 입력하세요.";
     }
 
@@ -374,6 +696,9 @@
       "그게 뭐야"
     ];
 
+    // 기억력 게임은 카드가 작아서 짧은 좋은말만 사용합니다.
+    const memoryWords = goodWords.filter((word) => word.length <= 7);
+
     let currentUser = null;
     let currentRoomCode = null;
     let currentPlayerId = null;
@@ -385,12 +710,24 @@
     let studentGameTimerInterval = null;
     let gameEndAt = null;
 
+    // 학생 화면 렌더링 상태
+    let renderedCardsKey = "";
+    let renderedMemoryKey = "";
+
+    const memoryState = {
+      deck: [],
+      firstIndex: -1,
+      busy: false,
+      matchedCount: 0,
+      boardNumber: 1,
+      localRound: 0
+    };
+
     const startPanel = document.getElementById("startPanel");
     const studentJoinPanel = document.getElementById("studentJoinPanel");
     const teacherPanel = document.getElementById("teacherPanel");
     const gamePanel = document.getElementById("gamePanel");
 
-    const teacherPasswordInput = document.getElementById("teacherPasswordInput");
     const teacherLoginBtn = document.getElementById("teacherLoginBtn");
     const studentModeBtn = document.getElementById("studentModeBtn");
     const studentJoinBtn = document.getElementById("studentJoinBtn");
@@ -399,7 +736,16 @@
     const startGameBtn = document.getElementById("startGameBtn");
     const refreshCardsBtn = document.getElementById("refreshCardsBtn");
     const resetGameBtn = document.getElementById("resetGameBtn");
+
+    const gameTypeSelect = document.getElementById("gameTypeSelect");
     const cardSpeedSelect = document.getElementById("cardSpeedSelect");
+    const memorySizeSelect = document.getElementById("memorySizeSelect");
+    const memoryTimeSelect = document.getElementById("memoryTimeSelect");
+
+    const goodBadOptions = document.getElementById("goodBadOptions");
+    const memorySizeOption = document.getElementById("memorySizeOption");
+    const memoryTimeOption = document.getElementById("memoryTimeOption");
+    const teacherHint = document.getElementById("teacherHint");
 
     const teacherRoomCode = document.getElementById("teacherRoomCode");
     const teacherGameTimer = document.getElementById("teacherGameTimer");
@@ -414,28 +760,20 @@
     const studentGameTimer = document.getElementById("studentGameTimer");
     const gameStatusMessage = document.getElementById("gameStatusMessage");
     const cardGrid = document.getElementById("cardGrid");
+    const memoryGrid = document.getElementById("memoryGrid");
+    const memoryChips = document.getElementById("memoryChips");
+    const memoryPairChip = document.getElementById("memoryPairChip");
+    const memoryBoardChip = document.getElementById("memoryBoardChip");
     const startMessage = document.getElementById("startMessage");
 
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
     });
 
-    teacherPasswordInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        teacherLoginBtn.click();
-      }
-    });
+    /* ===================== 입장 ===================== */
 
     teacherLoginBtn.addEventListener("click", async () => {
       startMessage.textContent = "";
-
-      const password = teacherPasswordInput.value.trim();
-
-      if (password !== TEACHER_PASSWORD) {
-        startMessage.textContent = "강사 비밀번호가 틀렸습니다.";
-        return;
-      }
 
       try {
         const result = await signInAnonymously(auth);
@@ -446,6 +784,7 @@
         startPanel.classList.add("hidden");
         teacherPanel.classList.remove("hidden");
 
+        applyTeacherOptionView();
         await createRoom();
       } catch (error) {
         startMessage.textContent =
@@ -506,6 +845,24 @@
       }
     });
 
+    /* ===================== 강사 조작 ===================== */
+
+    gameTypeSelect.addEventListener("change", applyTeacherOptionView);
+
+    function applyTeacherOptionView() {
+      const isMemory = gameTypeSelect.value === "memory";
+
+      goodBadOptions.classList.toggle("hidden", isMemory);
+      refreshCardsBtn.classList.toggle("hidden", isMemory);
+      memorySizeOption.classList.toggle("hidden", !isMemory);
+      memoryTimeOption.classList.toggle("hidden", !isMemory);
+
+      teacherHint.textContent = isMemory
+        ? "학생들은 같은 카드 배치를 받아 각자 짝을 맞춥니다. 짝 하나당 +1점, 한 판을 다 맞추면 보너스 +" +
+          MEMORY_BONUS_POINT + "점을 받고 새 판이 시작됩니다."
+        : "게임 시간은 60초입니다. 카드 변경 속도는 3초, 5초, 10초 중 선택할 수 있습니다.";
+    }
+
     createRoomBtn.addEventListener("click", createRoom);
 
     startGameBtn.addEventListener("click", async () => {
@@ -513,15 +870,39 @@
 
       stopTeacherIntervals();
 
+      const gameType = gameTypeSelect.value;
+
+      if (gameType === "memory") {
+        const pairCount = Number(memorySizeSelect.value);
+        const durationSeconds = Number(memoryTimeSelect.value);
+
+        gameEndAt = Date.now() + durationSeconds * 1000;
+
+        await update(ref(db, `rooms/${currentRoomCode}`), {
+          status: "playing",
+          gameType: "memory",
+          cards: makeMemoryDeck(pairCount),
+          memoryPairCount: pairCount,
+          cardChangeSeconds: null,
+          gameDurationSeconds: durationSeconds,
+          gameEndAt: gameEndAt,
+          updatedAt: Date.now()
+        });
+
+        startTeacherGameTimer(gameEndAt);
+        return;
+      }
+
       const selectedCardSeconds = Number(cardSpeedSelect.value);
-      const cards = makeRandomCards();
-      gameEndAt = Date.now() + GAME_DURATION_SECONDS * 1000;
+      gameEndAt = Date.now() + GOODBAD_DURATION_SECONDS * 1000;
 
       await update(ref(db, `rooms/${currentRoomCode}`), {
         status: "playing",
-        cards: cards,
+        gameType: "goodbad",
+        cards: makeRandomCards(),
+        memoryPairCount: null,
         cardChangeSeconds: selectedCardSeconds,
-        gameDurationSeconds: GAME_DURATION_SECONDS,
+        gameDurationSeconds: GOODBAD_DURATION_SECONDS,
         gameEndAt: gameEndAt,
         updatedAt: Date.now()
       });
@@ -532,11 +913,10 @@
 
     refreshCardsBtn.addEventListener("click", async () => {
       if (!currentRoomCode) return;
-
-      const cards = makeRandomCards();
+      if (gameTypeSelect.value === "memory") return;
 
       await update(ref(db, `rooms/${currentRoomCode}`), {
-        cards: cards,
+        cards: makeRandomCards(),
         updatedAt: Date.now()
       });
     });
@@ -564,6 +944,7 @@
 
       await set(ref(db, `rooms/${currentRoomCode}`), {
         status: "waiting",
+        gameType: gameTypeSelect.value,
         cards: [],
         createdAt: Date.now()
       });
@@ -600,8 +981,27 @@
       return shuffle([...selectedGood, ...selectedBad]);
     }
 
+    function makeMemoryDeck(pairCount) {
+      const words = shuffle(memoryWords).slice(0, pairCount);
+      const deck = [];
+
+      words.forEach((word, index) => {
+        deck.push({ text: word, pairId: index });
+        deck.push({ text: word, pairId: index });
+      });
+
+      return shuffle(deck);
+    }
+
     function shuffle(array) {
-      return [...array].sort(() => Math.random() - 0.5);
+      const copy = [...array];
+
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+
+      return copy;
     }
 
     function startAutoCardChange(cardSeconds) {
@@ -618,10 +1018,8 @@
           return;
         }
 
-        const cards = makeRandomCards();
-
         await update(ref(db, `rooms/${currentRoomCode}`), {
-          cards: cards,
+          cards: makeRandomCards(),
           updatedAt: Date.now()
         });
       }, cardSeconds * 1000);
@@ -630,7 +1028,7 @@
     function startTeacherGameTimer(endAt) {
       clearInterval(teacherGameTimerInterval);
 
-      updateTeacherTimerText(endAt);
+      teacherGameTimer.textContent = getRemainingSeconds(endAt) + "초";
 
       teacherGameTimerInterval = setInterval(async () => {
         const remaining = getRemainingSeconds(endAt);
@@ -640,10 +1038,6 @@
           await endGame();
         }
       }, 1000);
-    }
-
-    function updateTeacherTimerText(endAt) {
-      teacherGameTimer.textContent = getRemainingSeconds(endAt) + "초";
     }
 
     function startStudentGameTimer(endAt) {
@@ -659,7 +1053,7 @@
           clearInterval(studentGameTimerInterval);
           studentGameTimer.textContent = "종료";
           gameStatusMessage.textContent = "게임이 종료되었습니다.";
-          cardGrid.innerHTML = "";
+          clearStudentBoards();
         }
       }, 1000);
     }
@@ -690,17 +1084,25 @@
       teacherGameTimerInterval = null;
     }
 
+    /* ===================== 실시간 구독 ===================== */
+
     function listenRoomForTeacher(roomCode) {
       onValue(ref(db, `rooms/${roomCode}/players`), (snapshot) => {
         const players = snapshot.val() || {};
         const playerList = Object.values(players).sort((a, b) => b.score - a.score);
+        const medals = ["🥇", "🥈", "🥉"];
 
         scoreBody.innerHTML = "";
 
-        playerList.forEach((player) => {
+        playerList.forEach((player, index) => {
           const tr = document.createElement("tr");
 
+          if (index < 3) {
+            tr.className = "top";
+          }
+
           tr.innerHTML = `
+            <td>${medals[index] || index + 1}</td>
             <td>${escapeHtml(player.nickname)}</td>
             <td>${player.score}</td>
           `;
@@ -717,14 +1119,14 @@
         if (!room) {
           gameStatusMessage.textContent = "방이 종료되었습니다.";
           studentGameTimer.textContent = "종료";
-          cardGrid.innerHTML = "";
+          clearStudentBoards();
           return;
         }
 
         if (room.status === "waiting") {
           gameStatusMessage.textContent = "강사가 게임을 시작하면 카드가 보입니다.";
           studentGameTimer.textContent = "대기";
-          cardGrid.innerHTML = "";
+          clearStudentBoards();
           return;
         }
 
@@ -732,24 +1134,53 @@
           clearInterval(studentGameTimerInterval);
           gameStatusMessage.textContent = "게임이 종료되었습니다.";
           studentGameTimer.textContent = "종료";
-          cardGrid.innerHTML = "";
+          clearStudentBoards();
           return;
         }
 
-        if (room.status === "playing") {
-          if (room.gameEndAt) {
-            startStudentGameTimer(room.gameEndAt);
-          }
+        if (room.status !== "playing") return;
 
-          const cards = Array.isArray(room.cards)
-            ? room.cards
-            : Object.values(room.cards || {});
+        if (room.gameEndAt) {
+          startStudentGameTimer(room.gameEndAt);
+        }
+
+        const cards = Array.isArray(room.cards)
+          ? room.cards
+          : Object.values(room.cards || {});
+
+        if (room.gameType === "memory") {
+          cardGrid.classList.add("hidden");
+          memoryGrid.classList.remove("hidden");
+          memoryChips.classList.remove("hidden");
 
           gameStatusMessage.textContent =
-            "좋은말만 골라서 클릭하세요. 카드 변경 속도: " +
-            (room.cardChangeSeconds || "?") +
-            "초";
+            "같은 낱말 카드 두 장을 찾으세요. 짝 하나당 +1점, 한 판을 다 맞추면 +" +
+            MEMORY_BONUS_POINT + "점!";
 
+          const deckKey = "server:" + cards.map((card) => card.text).join("|");
+
+          if (deckKey !== renderedMemoryKey) {
+            renderedMemoryKey = deckKey;
+            memoryState.boardNumber = 1;
+            memoryState.localRound = 0;
+            startMemoryBoard(cards);
+          }
+
+          return;
+        }
+
+        cardGrid.classList.remove("hidden");
+        memoryGrid.classList.add("hidden");
+        memoryChips.classList.add("hidden");
+
+        gameStatusMessage.textContent =
+          "좋은말만 골라서 클릭하세요. 카드 변경 속도: " +
+          (room.cardChangeSeconds || "?") + "초";
+
+        const cardsKey = cards.map((card) => card.text).join("|");
+
+        if (cardsKey !== renderedCardsKey) {
+          renderedCardsKey = cardsKey;
           renderCards(cards);
         }
       });
@@ -758,6 +1189,16 @@
         myScore.textContent = snapshot.val() ?? 0;
       });
     }
+
+    function clearStudentBoards() {
+      cardGrid.innerHTML = "";
+      memoryGrid.innerHTML = "";
+      memoryChips.classList.add("hidden");
+      renderedCardsKey = "";
+      renderedMemoryKey = "";
+    }
+
+    /* ===================== 좋은말 고르기 ===================== */
 
     function renderCards(cards) {
       cardGrid.innerHTML = "";
@@ -779,23 +1220,13 @@
     async function clickCard(card, cardElement) {
       if (!currentRoomCode || !currentPlayerId) return;
 
-      const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}`));
-      const room = roomSnapshot.val();
+      const roomSnapshot = await get(ref(db, `rooms/${currentRoomCode}/status`));
 
-      if (!room || room.status !== "playing") return;
-
-      const scoreRef = ref(
-        db,
-        `rooms/${currentRoomCode}/players/${currentPlayerId}/score`
-      );
-
-      const snapshot = await get(scoreRef);
-      const currentScore = snapshot.val() ?? 0;
+      if (roomSnapshot.val() !== "playing") return;
 
       const point = card.type === "good" ? 1 : -1;
-      const nextScore = currentScore + point;
 
-      await set(scoreRef, nextScore);
+      await addScore(point);
 
       cardElement.style.pointerEvents = "none";
 
@@ -808,6 +1239,139 @@
         cardElement.classList.add("wrong");
         cardElement.textContent = "오답 -1";
       }
+    }
+
+    /* ===================== 기억력 카드 짝맞추기 ===================== */
+
+    function startMemoryBoard(deck) {
+      memoryState.deck = deck;
+      memoryState.firstIndex = -1;
+      memoryState.busy = false;
+      memoryState.matchedCount = 0;
+
+      memoryPairChip.textContent = "맞춘 짝 0";
+      memoryBoardChip.textContent = memoryState.boardNumber + "번째 판";
+
+      renderMemoryBoard(deck);
+    }
+
+    function renderMemoryBoard(deck) {
+      memoryGrid.innerHTML = "";
+
+      deck.forEach((card, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "mem-card";
+        wrapper.dataset.index = String(index);
+
+        const inner = document.createElement("div");
+        inner.className = "mem-inner";
+
+        const back = document.createElement("div");
+        back.className = "mem-face mem-back";
+        back.textContent = "💬";
+
+        const front = document.createElement("div");
+        front.className = "mem-face mem-front";
+        front.textContent = card.text;
+
+        inner.appendChild(back);
+        inner.appendChild(front);
+        wrapper.appendChild(inner);
+
+        wrapper.addEventListener("click", () => {
+          flipMemoryCard(index, wrapper);
+        });
+
+        memoryGrid.appendChild(wrapper);
+      });
+    }
+
+    async function flipMemoryCard(index, element) {
+      if (memoryState.busy) return;
+      if (element.classList.contains("matched")) return;
+      if (element.classList.contains("flipped")) return;
+
+      element.classList.add("flipped");
+      playFlipSound();
+
+      if (memoryState.firstIndex === -1) {
+        memoryState.firstIndex = index;
+        return;
+      }
+
+      const firstIndex = memoryState.firstIndex;
+      const firstElement = memoryGrid.querySelector(`.mem-card[data-index="${firstIndex}"]`);
+
+      memoryState.firstIndex = -1;
+
+      const isMatch =
+        memoryState.deck[firstIndex].pairId === memoryState.deck[index].pairId;
+
+      if (isMatch) {
+        firstElement.classList.remove("flipped");
+        element.classList.remove("flipped");
+        firstElement.classList.add("matched");
+        element.classList.add("matched");
+
+        memoryState.matchedCount += 1;
+        memoryPairChip.textContent = "맞춘 짝 " + memoryState.matchedCount;
+
+        playCorrectSound();
+        await addScore(1);
+
+        if (memoryState.matchedCount * 2 === memoryState.deck.length) {
+          await finishMemoryBoard();
+        }
+
+        return;
+      }
+
+      memoryState.busy = true;
+      playWrongSound();
+
+      setTimeout(() => {
+        firstElement.classList.remove("flipped");
+        element.classList.remove("flipped");
+        memoryState.busy = false;
+      }, 900);
+    }
+
+    async function finishMemoryBoard() {
+      memoryState.busy = true;
+
+      await addScore(MEMORY_BONUS_POINT);
+      playClearSound();
+
+      gameStatusMessage.textContent =
+        "한 판 완성! 보너스 +" + MEMORY_BONUS_POINT + "점, 새 판이 시작됩니다.";
+
+      setTimeout(() => {
+        // 남은 시간 동안 계속 풀 수 있도록 같은 낱말로 새 판을 섞습니다.
+        memoryState.boardNumber += 1;
+        memoryState.localRound += 1;
+        renderedMemoryKey = renderedMemoryKey + "#" + memoryState.localRound;
+
+        const pairCount = memoryState.deck.length / 2;
+        startMemoryBoard(makeMemoryDeck(pairCount));
+
+        memoryState.busy = false;
+      }, 1100);
+    }
+
+    /* ===================== 점수 / 소리 ===================== */
+
+    async function addScore(point) {
+      if (!currentRoomCode || !currentPlayerId) return;
+
+      const scoreRef = ref(
+        db,
+        `rooms/${currentRoomCode}/players/${currentPlayerId}/score`
+      );
+
+      const snapshot = await get(scoreRef);
+      const currentScore = snapshot.val() ?? 0;
+
+      await set(scoreRef, currentScore + point);
     }
 
     function playCorrectSound() {
@@ -824,6 +1388,22 @@
       setTimeout(() => {
         playTone(180, 0.16, 0.05);
       }, 110);
+    }
+
+    function playFlipSound() {
+      playTone(520, 0.06, 0.03);
+    }
+
+    function playClearSound() {
+      playTone(660, 0.09, 0.05);
+
+      setTimeout(() => {
+        playTone(880, 0.09, 0.05);
+      }, 100);
+
+      setTimeout(() => {
+        playTone(1180, 0.16, 0.05);
+      }, 200);
     }
 
     function playTone(frequency, duration, volume) {
@@ -858,6 +1438,8 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
+
+    applyTeacherOptionView();
   </script>
 </body>
 </html>
