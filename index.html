@@ -318,7 +318,7 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 60;
+      z-index: 80;
     }
 
     #clearBanner {
@@ -326,7 +326,7 @@
       left: 50%;
       top: 42%;
       transform: translate(-50%, -50%);
-      z-index: 61;
+      z-index: 81;
       pointer-events: none;
       background: linear-gradient(135deg, #FFF6D8 0%, #FFE3DC 50%, #E4EEFB 100%);
       border: 4px solid white;
@@ -357,6 +357,139 @@
       30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
       78% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
       100% { transform: translate(-50%, -58%) scale(0.94); opacity: 0; }
+    }
+
+    /* ---------- 순위 발표 (강사 화면) ---------- */
+    #awardOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(246, 251, 253, 0.86);
+      backdrop-filter: blur(4px);
+    }
+
+    .award-card {
+      width: 100%;
+      max-width: 620px;
+      max-height: 92dvh;
+      overflow-y: auto;
+      background: white;
+      border: 3px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 18px 44px rgba(120, 160, 185, 0.28);
+      padding: 26px 24px;
+      text-align: center;
+    }
+
+    .award-card h2 {
+      margin: 0 0 4px;
+      font-size: clamp(24px, 4vw, 34px);
+      color: var(--blue-text);
+    }
+
+    .award-card .award-sub {
+      margin: 0 0 18px;
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+
+    .award-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .award-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 20px;
+      background: #F7FBFD;
+      border: 3px solid var(--line);
+      opacity: 0;
+      transform: translateY(18px) scale(0.92);
+    }
+
+    .award-row.show {
+      animation: awardPop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+    }
+
+    @keyframes awardPop {
+      0% { opacity: 0; transform: translateY(18px) scale(0.86); }
+      60% { opacity: 1; transform: translateY(0) scale(1.06); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .award-row .medal { font-size: clamp(26px, 4.5vw, 38px); line-height: 1; }
+    .award-row .who {
+      flex: 1;
+      text-align: left;
+      font-family: "Jua", sans-serif;
+      font-size: clamp(18px, 3.2vw, 26px);
+      color: var(--ink);
+      word-break: break-all;
+    }
+    .award-row .pts {
+      font-family: "Jua", sans-serif;
+      font-size: clamp(20px, 3.6vw, 30px);
+      color: var(--blue-deep);
+      white-space: nowrap;
+    }
+
+    .award-row.rank1 { background: var(--yellow-soft); border-color: #F3DC9C; }
+    .award-row.rank2 { background: #F2F5F8; border-color: #DCE4EB; }
+    .award-row.rank3 { background: #FBEFE6; border-color: #F0D9C4; }
+
+    .award-rest {
+      margin: 0 0 18px;
+      font-size: 14px;
+      line-height: 1.9;
+      color: var(--ink-soft);
+      word-break: break-all;
+    }
+
+    /* ---------- 학생 결과 화면 ---------- */
+    .student-result {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      background: linear-gradient(135deg, #F4FAFD 0%, #FDF6F3 100%);
+      border: 3px dashed var(--blue-soft);
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .result-medal { font-size: clamp(44px, 12vw, 78px); line-height: 1; }
+
+    .result-rank {
+      font-family: "Jua", sans-serif;
+      font-size: clamp(24px, 6.5vw, 44px);
+      color: var(--blue-text);
+    }
+
+    .result-score {
+      font-family: "Jua", sans-serif;
+      font-size: clamp(17px, 4.2vw, 26px);
+      color: var(--blue-deep);
+    }
+
+    .result-top {
+      margin-top: 4px;
+      font-size: clamp(12px, 3.2vw, 15px);
+      color: var(--ink-soft);
+      line-height: 1.8;
+      word-break: break-all;
     }
 
     .play-msg {
@@ -783,6 +916,7 @@
         <button id="createRoomBtn" class="soft">새 방 만들기</button>
         <button id="startGameBtn">게임 시작</button>
         <button id="refreshCardsBtn" class="secondary">카드 바꾸기</button>
+        <button id="showAwardsBtn" class="secondary">순위 발표 보기</button>
         <button id="resetGameBtn" class="danger">게임 초기화</button>
       </div>
 
@@ -821,9 +955,31 @@
       <div class="board-area">
         <div id="cardGrid" class="card-grid"></div>
         <div id="memoryGrid" class="memory-grid hidden"></div>
+
+        <div id="studentResult" class="student-result hidden">
+          <div class="result-medal" id="resultMedal">🎖</div>
+          <div class="result-rank" id="resultRank"></div>
+          <div class="result-score" id="resultScore"></div>
+          <div class="result-top" id="resultTop"></div>
+        </div>
       </div>
     </section>
   </main>
+
+  <div id="awardOverlay" class="hidden">
+    <div class="award-card">
+      <h2>🏆 순위 발표</h2>
+      <p class="award-sub" id="awardSub"></p>
+
+      <div class="award-list" id="awardList"></div>
+      <p class="award-rest" id="awardRest"></p>
+
+      <div class="row" style="justify-content:center">
+        <button id="awardReplayBtn" class="soft">다시 발표</button>
+        <button id="awardCloseBtn" class="secondary">닫기</button>
+      </div>
+    </div>
+  </div>
 
   <canvas id="confettiCanvas" class="hidden"></canvas>
   <div id="clearBanner" class="hidden"></div>
@@ -968,7 +1124,21 @@
     const createRoomBtn = document.getElementById("createRoomBtn");
     const startGameBtn = document.getElementById("startGameBtn");
     const refreshCardsBtn = document.getElementById("refreshCardsBtn");
+    const showAwardsBtn = document.getElementById("showAwardsBtn");
     const resetGameBtn = document.getElementById("resetGameBtn");
+
+    const awardOverlay = document.getElementById("awardOverlay");
+    const awardList = document.getElementById("awardList");
+    const awardRest = document.getElementById("awardRest");
+    const awardSub = document.getElementById("awardSub");
+    const awardReplayBtn = document.getElementById("awardReplayBtn");
+    const awardCloseBtn = document.getElementById("awardCloseBtn");
+
+    const studentResult = document.getElementById("studentResult");
+    const resultMedal = document.getElementById("resultMedal");
+    const resultRank = document.getElementById("resultRank");
+    const resultScore = document.getElementById("resultScore");
+    const resultTop = document.getElementById("resultTop");
 
     const gameTypeSelect = document.getElementById("gameTypeSelect");
     const cardSpeedSelect = document.getElementById("cardSpeedSelect");
@@ -1105,6 +1275,7 @@
       if (!currentRoomCode) return;
 
       stopTeacherIntervals();
+      closeAwards();
 
       const gameType = gameTypeSelect.value;
 
@@ -1173,6 +1344,7 @@
       if (!isTeacher) return;
 
       stopTeacherIntervals();
+      closeAwards();
 
       currentRoomCode = makeRoomCode();
       teacherRoomCode.textContent = currentRoomCode;
@@ -1310,6 +1482,104 @@
         cards: [],
         endedAt: Date.now()
       });
+
+      await openAwards();
+    }
+
+    /* ===================== 순위 발표 (강사 화면) ===================== */
+
+    showAwardsBtn.addEventListener("click", openAwards);
+    awardReplayBtn.addEventListener("click", () => revealAwards(lastAwardPlayers));
+    awardCloseBtn.addEventListener("click", closeAwards);
+
+    let lastAwardPlayers = [];
+    let awardTimers = [];
+
+    async function openAwards() {
+      if (!currentRoomCode) return;
+
+      const snapshot = await get(ref(db, `rooms/${currentRoomCode}/players`));
+      const players = snapshot.val() || {};
+
+      lastAwardPlayers = Object.values(players)
+        .map((player) => ({
+          nickname: player.nickname,
+          score: Number(player.score) || 0
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      awardOverlay.classList.remove("hidden");
+      revealAwards(lastAwardPlayers);
+    }
+
+    function closeAwards() {
+      awardTimers.forEach(clearTimeout);
+      awardTimers = [];
+      awardOverlay.classList.add("hidden");
+    }
+
+    function revealAwards(players) {
+      awardTimers.forEach(clearTimeout);
+      awardTimers = [];
+
+      awardList.innerHTML = "";
+      awardRest.textContent = "";
+
+      if (players.length === 0) {
+        awardSub.textContent = "아직 참여한 학생이 없습니다.";
+        return;
+      }
+
+      awardSub.textContent =
+        "모두 " + players.length + "명이 참여했습니다. 3등부터 발표합니다!";
+
+      const medals = ["🥇", "🥈", "🥉"];
+      const topPlayers = players.slice(0, 3);
+
+      // 1등이 위에 오도록 그려두고, 공개는 아래쪽(3등)부터 합니다.
+      const rows = topPlayers.map((player, index) => {
+        const row = document.createElement("div");
+        row.className = "award-row rank" + (index + 1);
+
+        row.innerHTML = `
+          <span class="medal">${medals[index]}</span>
+          <span class="who">${escapeHtml(player.nickname)}</span>
+          <span class="pts">${player.score}점</span>
+        `;
+
+        awardList.appendChild(row);
+        return row;
+      });
+
+      if (players.length > 3) {
+        awardRest.textContent =
+          "그 외 — " +
+          players
+            .slice(3)
+            .map((player, index) => (index + 4) + "등 " + player.nickname + " " + player.score + "점")
+            .join(" · ");
+      }
+
+      // 3등 → 2등 → 1등 순서로 1.6초 간격 공개
+      const revealOrder = [...rows].reverse();
+
+      revealOrder.forEach((row, order) => {
+        const isLast = order === revealOrder.length - 1;
+
+        awardTimers.push(
+          setTimeout(() => {
+            row.classList.add("show");
+
+            if (isLast) {
+              playFanfare();
+              launchConfetti(200);
+            } else {
+              playTone(880, 0.18, 0.05, "triangle");
+              playTone(1174.66, 0.16, 0.035, "sine", 0.12);
+            }
+          }, 500 + order * 1600)
+        );
+      });
     }
 
     function stopTeacherIntervals() {
@@ -1371,6 +1641,7 @@
           gameStatusMessage.textContent = "게임이 종료되었습니다.";
           studentGameTimer.textContent = "종료";
           clearStudentBoards();
+          showStudentResult(room);
           return;
         }
 
@@ -1430,8 +1701,65 @@
       cardGrid.innerHTML = "";
       memoryGrid.innerHTML = "";
       memoryChips.classList.add("hidden");
+      studentResult.classList.add("hidden");
       renderedCardsKey = "";
       renderedMemoryKey = "";
+    }
+
+    // 게임이 끝나면 학생 화면에 내 등수를 보여줍니다.
+    let resultShownFor = "";
+
+    function showStudentResult(room) {
+      const players = room.players || {};
+
+      const playerList = Object.values(players)
+        .map((player) => ({
+          nickname: player.nickname,
+          score: Number(player.score) || 0
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      const me = players[currentPlayerId];
+      if (!me) return;
+
+      const myScoreValue = Number(me.score) || 0;
+      const rank = playerList.filter((player) => player.score > myScoreValue).length + 1;
+      const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+      resultMedal.textContent = medals[rank] || "🎖";
+      resultRank.textContent =
+        playerList.length + "명 중 " + rank + "등!";
+      resultScore.textContent = "최종 점수 " + myScoreValue + "점";
+
+      resultTop.innerHTML = playerList
+        .slice(0, 3)
+        .map((player, index) =>
+          (medals[index + 1] || "") +
+          " " +
+          escapeHtml(player.nickname) +
+          " " +
+          player.score +
+          "점"
+        )
+        .join("<br>");
+
+      cardGrid.classList.add("hidden");
+      memoryGrid.classList.add("hidden");
+      studentResult.classList.remove("hidden");
+
+      // 같은 게임 결과로는 축하 효과를 한 번만 실행합니다.
+      const resultKey = currentRoomCode + ":" + (room.endedAt || 0) + ":" + myScoreValue;
+      if (resultShownFor === resultKey) return;
+      resultShownFor = resultKey;
+
+      if (rank <= 3) {
+        playFanfare();
+        launchConfetti(160);
+      } else {
+        playTone(523.25, 0.16, 0.045, "triangle");
+        playTone(659.25, 0.16, 0.04, "triangle", 0.16);
+        playTone(783.99, 0.26, 0.04, "triangle", 0.32);
+      }
     }
 
     /* ===================== 좋은말 고르기 ===================== */
