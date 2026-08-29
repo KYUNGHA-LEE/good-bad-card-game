@@ -1016,10 +1016,11 @@
     const GOODBAD_DURATION_SECONDS = 60;
     const MEMORY_BONUS_POINT = 3;
 
-    // 강사 입장은 주소 뒤에 ?mode=admin 을 붙였을 때만 노출 (전 게임 공통 규칙)
-    const isAdminMode = new URLSearchParams(location.search).get("mode") === "admin";
+    // 강사 입장은 주소 뒤에 ?mode=teacher 를 붙였을 때만 노출 (기존 ?mode=admin 링크도 유지)
+    const urlMode = new URLSearchParams(location.search).get("mode");
+    const isTeacherMode = urlMode === "teacher" || urlMode === "admin";
 
-    if (!isAdminMode) {
+    if (!isTeacherMode) {
       document.getElementById("teacherLoginBtn").classList.add("hidden");
       document.getElementById("startHint").textContent =
         "학생으로 입장을 눌러 방 코드와 닉네임을 입력하세요.";
